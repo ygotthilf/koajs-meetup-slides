@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>reveal.js - The HTML Presentation Framework</title>
+
+		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+		<meta name="author" content="Hakim El Hattab">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/league.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+
+				<section data-markdown>
+					<script type="text/template">
+						# Koa
+						### le framework Web ECMAScript 2015
+						<small>Meetup Paris Node.js</small>
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Express.js
+						```
+						app.get('/users', function list(req, res, next) {
+						  User.find().exec(function(err, users) {
+						    if (err) return next(err);
+						    res.json(200, users);
+						  });
+						});
+
+						app.put('/users/:id', function update(req, res, next) {
+						  User.findById(req.param(id), function (err, user) {
+						    if (err) return next(err);
+						    if (!user) return next(new Error('User not found'));
+						    user = _.merge(user, req.body);
+						    user.save(function (err) {
+						      if (err) return next(err);
+						      return res.send(user);
+						    });
+						  });
+						});
+
+						```
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Koa
+						```
+						app.get('/users', function* list() {
+						  this.body = User.find().exec();
+						});
+
+						app.put('/users/:id', function* update() {
+							var id = this.params.id;
+							var body = this.request.body;
+							var user = yield User.findById(id).exec();
+
+							user = _.extend(user, body);
+
+							yield user.save();
+
+							this.body = user;
+						});
+
+						```
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Callback 
+						(for n00b)
+						```js
+						Query.exec(function (err, result) {
+							// your code here
+						});
+
+						```
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Thunk function
+						```js
+						// YES
+						Query.exec(cb);
+
+						// NO
+						User.find({}, cb);
+
+						// YES
+						function thunk(cb) {
+						  User.find({}, cb);
+						}
+
+						// YES
+						var thunk = User.find.bind(User, {});
+						thunk(cb);
+						```
+					</script>
+				</section>
+
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## Promise
+							
+							Objet pouvant récupérer le résultat d&apos;une opération unique (généralement asynchrone) 
+
+							3 états : en attente, en échec, succès
+
+							Natif ES2015
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Promise
+							### Then
+
+							```js
+							var promise = User.find().exec();
+
+							promise.then(
+							  function(result) { /* success */ },
+							  function(err) { /* fail */ }
+							);
+
+							```
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Promise
+							### Création
+
+							```js
+							var promise = new Promise(function(resolve, reject) {
+								User.find({}, function (err, data) {
+									if(err) return reject(err);
+									resolve(data);
+								});
+							});
+
+							promise.then(
+								function(result) { /* success */ },
+								function(err) { /* fail */ }
+							);
+
+							```
+						</script>
+					</section>
+				</section>
+
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## Generator
+							Un générateur est une fonction qui peut s&apos;intérrompre et être relancée à tout moment.
+						</script>
+					</section>
+
+					<section>
+ 						<img data-src="img/generator.png">
+ 					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Generator
+							#### fibonacci
+							
+							```js
+							function* fibonacci() {
+								let prev = 0; let curr = 1;
+								while (true) {
+									let prev = curr;
+									let curr = prev + curr;
+									var reset = yield curr;
+									if (reset) {
+										prev = 0; curr = 1;
+									}
+								}
+							}
+
+							let it = fibonacci();
+							it.next().value; // 1
+							it.next().value; // 2
+							it.next().value; // 3
+							it.next().value; // 5
+							it.next().value; // 8
+							it.next(true).value; // 1
+							it.next().value; // 2
+							```
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Generator
+							#### Api
+							
+							```js
+							let it = generator();
+
+							it.next();
+							
+							let output = it.next()
+							output.value;
+							output.done; // false or true
+							
+							it.next(input);
+
+							it.throw(new Error());
+							```
+						</script>
+					</section>
+
+				</section>
+
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## Co 
+
+							Struture de contrôle (control flow) pour écrire du code non-bloquant 
+
+							- 19K téléchargements par semaine
+							- 500 modules en dépendent
+							- 3300 stars sur GitHub
+							- 230 lignes de code
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Co 
+							#### Utilisation
+
+							```js
+							var co = require('co');
+
+							co(function* update() {
+								var user = yield User.findById(id).exec();
+
+								user = _.extend(user, updateUser);
+
+								yield user.save();
+
+								console.log('user saved !', user);
+							});
+							```
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Co
+							#### Implémentation (simplifiée)
+
+							```js
+							function co(generator) {
+							  function onResolved(res) {
+							    var ret = generator.next(res);
+							    onPromise(ret);
+							  }
+							  function onRejected(err) {
+							    var ret = generator.throw(err);
+							    onPromise(ret);
+							  }
+							  function onPromise(ret) {
+							    if (!ret.done) {
+							      var promise = toPromise(ret.value);
+							      promise.then(onResolved, onRejected);
+							    }
+							  }
+							  onResolved();
+							}
+							```
+						</script>
+					</section>
+
+				</section>
+
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## Koa 
+							Framework Web minimaliste
+							- créé mi-2013 par l&apos;équipe derrière Express
+							- 1500 lignes de code
+							- 6500 stars sur GitHub
+							- 1500 téléchargements par semaine (100k Express, 2500 Hapi)							
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Koa 
+							#### Exemple
+
+							```
+							node --harmony app.js 
+							```
+
+							version de node > 0.11.x
+
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Koa 
+							#### API
+
+							4 objets :
+							- application
+							- context
+							- request
+							- response
+
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Application 
+							#### Hello world
+
+							```js
+							var koa = require('koa');
+							var app = koa();
+
+							app.use(function *(){
+							  this.body = 'Hello World';
+							});
+
+							app.listen(3000);
+							```
+
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Application 
+							#### Cascade de middlewares
+
+							```js
+							app.use(function *(next){
+								console.log('1');
+								yield next;
+								console.log('4');
+							});
+
+							app.use(function *(next){
+								console.log('2');
+								yield next;
+								console.log('3');
+							});
+
+							app.use(function *(next){
+								this.body = 'Hello World';
+							});
+
+							// 1, 2, 3, 4
+
+							```
+
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Application 
+							#### Propagation des exceptions
+
+							```js
+							app.use(function *(next){
+								console.log('1');
+								try {
+									yield next;
+								} catch (error) {
+									console.log(error);
+								}
+							});
+
+							app.use(function *(next){
+								console.log('2');
+								yield next;
+								console.log('3'); // not called
+							});
+
+							app.use(function *(next){
+								throw new Error('fail !');
+							});
+
+							```
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Application 
+							#### Gestion des erreurs
+
+							```js
+							app.on('error', function(err){
+							  log.error('server error', err);
+							});
+
+							app.on('error', function(err, ctx){
+							  log.error('server error', err, ctx);
+							});
+							```
+
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Context 
+
+							Encapsule les objets _request_ et _response_ et expose des helpers
+							```js
+								app.use(function *(){
+								  this; // is the Context
+								  this.request; // is a Koa request
+								  this.response; // is a Koa response
+								  this.req; // is a Node.js request
+								  this.res; // is a Node.js response
+
+								  this.body; 
+								  this.throw('something wrong', 400);
+								  /* Equivalent to :
+										var err = new Error('name required');
+										err.status = 400;
+										throw err;
+								  */
+								  // ...
+								});
+							```
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Request
+
+							Encapsule l&apos;objet Node.js _request_ 
+							```js
+							this.request.body;
+							this.request.header;
+							this.request.query;
+							// ...
+							```
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## Response
+
+							Encapsule l&apos;objet Node.js _response_ 
+							```js
+							this.response.body;
+							this.response.status;
+							this.response.set('Cache-Control', 'no-cache');
+							// ...
+							```
+						</script>
+					</section>
+
+				</section>
+
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## Middleware							
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## koa-router...
+
+							```js
+							var app = require('koa')();
+							var Router = require('koa-router');
+
+							var router = new Router({
+							  prefix: '/users'
+							});
+
+							router.get('/', function* (){
+								this.body = yield User.find().exec();
+							});
+
+							router.put('/:id', function* (){
+								var id = this.params.id;
+								var body = this.request.body;
+								var user = yield User.findById(id).exec();
+
+								user = _.extend(user, body);
+
+								yield user.save();
+
+								this.body = user;
+							});
+
+							```							
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							## ... et plein d&apos;autres
+
+							- **koa-static** : renvoie des fichiers statiques
+							- **koa-send** : envoie de fichier
+							- **koa-bodyparser** : parse le body
+							- **koa-cors** : gère le Cross-Origin resource sharing
+							- **koa-session** : stocke une session
+							- **koa-passport** : gère l&apos;authentification
+							- **koa-bunyan** : utilise bunyan comme logger
+							- ...
+						</script>
+					</section>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Conclusion
+
+						- Avantages
+							- minimaliste
+							- plus de callback
+							- gestion des erreurs simple
+
+						- Inconvénients
+							- communauté moins importante qu&apos;Express
+							- moins _industrialisable_ que Hapi et autres...
+					</script>
+				</section>
+
+
+				<section data-markdown>
+					<script type="text/template">
+						## Références
+
+						- [Promise](https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Objets_globaux/Promise)
+						- [Generator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators)
+						- [Co](https://github.com/tj/co)
+						- [Koa](http://koajs.com/)
+						- [Wiki Koa](https://github.com/koajs/koa/wiki)
+						- [Koa-router](https://github.com/alexmingoia/koa-router)
+					</script>
+				</section>
+
+
+				<section>
+					<pre><code >
+					</code>
+					</pre>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
